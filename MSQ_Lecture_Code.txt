@@ -1,0 +1,507 @@
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+              M i c r o s o f t    Q#  교 육 용   코 드
+                                                              2022. 07. 22
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+=======================================
+Copyright © 2022-2022 BRFrame Inc. - All rights reserved
+
+■=====================================
+### Jupyter Notebook – 기존 Conda 환경에 설치
+  < https://github.com/crazy4pi314/learn-qc-with-python-and-qsharp >
+
+■=====================================
+○ Conda 환경 파일 준비: environment.yml
+name: qsharp-book
+channels:
+- conda-forge
+- microsoft
+dependencies:
+- notebook
+- numpy
+- scipy
+- qutip
+- matplotlib
+- pip
+- qsharp==0.24.210930
+
+○ Environment.yml 파일 준비
+파일 다운로드 또는 메모장 등으로 파일을 생성
+파일을 C:\WINDOWS\SYSTEM32 폴더에 복사
+
+○ PowerShell 실행 (*관리자권한으로 실행)
+conda env create -f environment.yml
+conda activate qsharp-book
+conda install -c quantum-engineering qsharp
+
+○ 설치확인
+python
+
+import qsharp
+qsharp.component_versions()
+quit()
+
+○ [참고] Jupyter notebook 관리
+jupyter kernelspec list
+python -m ipykernel  install --user --name qsharp-book --display-name "qsharp-book"
+jupyter kernelspec uninstall qsharp-book  <qhsarp-book 명칭 삭제할 경우>
+
+○ [참고] 가상환경 관리
+conda env list
+conda env remove --n qsharp-book
+
+
+■□■□■□■□■□■□■□■□■□■□■□■□■□■□
+
+○ Q# 기본 코드
+operation sample() : Result {
+    use q = Qubit();
+         H(q);
+         return M(q);
+}
+
+
+■□■□■□■□■□■□■□■□■□■□■□■□■□■□
+○ Jupyter Notebook – 최신 버전을 설치
+
+< https://docs.microsoft.com/ko-kr/azure/quantum/install-command-line-qdk >
+○ PowerShell 실행 (관리자권한으로 실행)
+conda init
+conda create -n qsharp-env -c microsoft qsharp notebook
+
+○ 설치확인
+Conda activate qsharp-env
+python –c “import qsharp”
+또는 python 실행 후
+import qsharp
+qsharp.component_versions()
+
+■=====================================
+
+○ Q# 기본 코드
+operation Sample01() : Result {
+    use q = Qubit();
+         H(q);
+         return M(q);
+}
+
+%simulate Sample01
+
+%debug Sample01
+
+%trace Sample01
+%who
+%qir Sample01
+
+%estimate Sample01
+%debug Sample01
+
+■□■□■□■□■□■□■□■□■□■□■□■□■□■□
+○ Q# 프로그래밍 개요
+
+def hello();
+    print("Hello, world~");
+
+hello()
+
+def qrng(device : QuantumDevice) -> bool:
+     with device.using_qubit() as q:
+     q.h()
+     return q.measure()
+
+○ Numpy로 QNRG 구현
+import numpy as np
+ket0 = np.array(
+    [[1], [0]]
+)
+ket0
+
+ket1 = np.array(
+    [[0], [1]]
+)
+ket1
+
+ket_plus = (ket0 + ket1) / np.sqrt(2)
+ket_plus
+
+H = np.array([[1, 1], [1, -1]]) / np.sqrt(2)
+H @ ket0
+
+H @ ket1
+
+#---- X gate
+X = np.array([[0, 1], [1, 0]])
+X @ ket0
+(X @ ket0 == ket1).all()
+X @ H @ ket0
+
+#---- QuTiP’s representation of the Hadamard operation
+from qutip.qip.operations import hadamard_transform
+H = hadamard_transform()
+H
+
+#---- Making a Qobj from a vector representing a qubit state
+import qutip as qt
+ket0 = qt.Qobj([[1], [0]])
+ket0
+
+#---- Using QuTiP to easily create |0⟩ and |1⟩
+import qutip as qt
+ket0 = qt.basis(2, 0)
+ket0
+
+ket1 = qt.basis(2, 1)
+ket1
+
+#---- Using QuTiP to create an object for the X matrix
+qt.sigmax()
+
+#---- Tensor products in QuTiP
+psi = qt.basis(2, 0)
+phi = qt.basis(2, 1)
+qt.tensor(psi, phi)
+
+H = hadamard_transform()
+I = qt.qeye(2)
+qt.tensor(H, I)
+
+
+■□■□■□■□■□■□■□■□■□■□■□■□■□■□
+○ QDK 프로그래밍
+
+function HelloWorld() : Unit {
+    Message("Hello, classical world!");
+}
+%simulate HelloWorld
+
+
+operation HelloWorld() : Unit {
+    Message("Hello, classical world!");
+}
+
+%simulate HelloWorld
+
+○ Operation 문을 이용한 Q#의 양자 중첩
+// 1개의 양자 중첩
+operation Rand() : Result {
+    use q = Qubit();
+    H(q);
+    return MResetZ(q);
+}
+
+// 라이브러리 추가하여 오류를 수정
+operation Rand() : Result {
+    use q = Qubit();
+    H(q);
+    return Microsoft.Quantum.Measurement.MResetZ(q);
+}
+
+open Microsoft.Quantum.Measurement;
+operation Rand() : Result {
+    use q = Qubit();
+    H(q);
+    return MResetZ(q);
+}
+
+// 여러 개의 양자를 생성
+open Microsoft.Quantum.Intrinsic;   // H 적용;
+open Microsoft.Quantum.Measurement;   // MResetZ 적용;
+open Microsoft.Quantum.Canon;   // ApplyToEach 적용;
+open Microsoft.Quantum.Arrays;   // ForEach 적용;
+
+operation RandArray( n : Int ) : Result [] {
+    use q = Qubit[n];
+    ApplyToEach(H, q);
+    return ForEach(MResetZ, q);
+}
+
+○ ======= SampleRand.qs 파일 생성
+namespace  SampleRand {
+    open Microsoft.Quantum.Intrinsic;
+    open Microsoft.Quantum.Measurement;
+    operation Rand() : Result {
+        use q = Qubit();
+        H(q);
+        return MResetZ(q);
+    }
+}
+
+open Microsoft.Quantum.Intrinsic;   // H 적용;
+open Microsoft.Quantum.Measurement;   // MResetZ 적용;
+open Microsoft.Quantum.Canon;   // ApplyToEach 적용;
+open Microsoft.Quantum.Arrays;   // ForEach 적용;
+
+operation RandArray( n : Int ) : Result [] {
+    use q = Qubit[n];
+    ApplyToEach(H, q);
+    return ForEach(MResetZ, q);
+}
+
+
+○ Python에서 *.qs 파일 호출하여 실행
+r1 = Rand()
+r2 = RandArray (n=4)
+
+print(r1)
+print(r2)
+
+#----- Simulate와 Estimate
+r1_r = Rand.simulate()
+r1_e = Rand.estimate_resources()
+ 
+r2_r = RandArray.simulate(n=4)
+r2_e = RandArray.estimate_resources(n=4)
+
+print('Single qubit:\n' + str(r1_r))
+print(r1_e)
+ 
+print('\nMultiple qubits:\n' + str(r2_r))
+print(r2_e)
+
+
+■=====================================
+○ QDK 프로그래밍 사례
+
+< https://docs.microsoft.com/ko-kr/azure/quantum/user-guide/language/statements/conditionalloops >
+
+// PlayMorganasGame() 디자인
+operation PlayMorganasGame() : Unit {                          
+    mutable nRounds = 0;                                       
+    mutable done = false;
+    repeat {                                                   
+        set nRounds = nRounds + 1;
+        set done = (Rand() == Zero);                 
+    }
+    until done                                                    
+    fixup {}
+
+    Message($"It took Lancelot {nRounds} turns to get home."); 
+}
+
+%simulate PlayMorganasGame
+
+//Qubit 변환을 이용한 PlayMorganasGame() 디자인 – 편향된 확률(winProb)
+
+< https://docs.microsoft.com/ko-kr/azure/quantum/concepts-the-qubit#visualizing-qubits-and-transformations-using-the-bloch-sphere >
+
+open Microsoft.Quantum.Math;
+
+operation BiasedCoin(winProb : Double, q : Qubit) : Unit {
+    let rotationAngle = 2.0 * ArcCos(Sqrt(1.0 - winProb));   
+    Ry (rotationAngle, q);
+}
+
+operation Rand(  state : (Qubit => Unit)  ) : Result {
+    use q = Qubit();
+    state (q);                                    
+    return MResetZ(q);
+}
+
+operation PlayMorganasGame( winProb : Double  ) : Unit {                          
+    mutable nRounds = 0;                                       
+    mutable done = false;
+    let prior = BiasedCoin(winProb, _); 
+    repeat {                                                   
+        set nRounds = nRounds + 1;
+        set done = (Rand( prior  ) == Zero);                 
+    }
+    until done                                                    
+//    fixup {}
+    Message($"It took Lancelot {nRounds} turns to get home."); 
+}
+
+%simulate PlayMorganasGame winProb=0.999
+
+■□■□■□■□■□■□■□■□■□■□■□■□■□■□
+○ QDK 이용한 프로그래밍 사례 –  Q# Classification
+
+< https://github.com/microsoft/QuantumKatas/blob/main/tutorials/QuantumClassification/InsideQuantumClassifiers.ipynb >
+
+// The raw data
+
+open Microsoft.Quantum.Math;
+open Microsoft.Quantum.Random;
+
+operation SampleData (samplesNumber : Int, separationAngles : Double[]) : (Double[][], Int[]) {
+    mutable features = [];
+    mutable labels = [];
+    for i in 0 .. samplesNumber - 1 {
+        let sample = [DrawRandomDouble(0.0, 1.0), DrawRandomDouble(0.0, 1.0)];
+        let angle = ArcTan2(sample[1], sample[0]);
+        set features += [sample];
+        set labels += [(angle < separationAngles[0] or angle > separationAngles[1]) ? 0 | 1];
+    }
+    return (features, labels);
+}
+
+operation SampleDataDemo () : Unit {
+    let trainingData = SampleData(5, [PI() / 6.0, PI()/ 3.0]);
+    Message($"{trainingData}");
+}
+
+//-----------------------------------------------
+%simulate SampleDataDemo
+
+//-----Data Encoding
+open Microsoft.Quantum.Arithmetic;
+open Microsoft.Quantum.Diagnostics;
+open Microsoft.Quantum.Math;
+open Microsoft.Quantum.MachineLearning;
+open Microsoft.Quantum.Random;
+
+operation EncodeDataDemo () : Unit {
+    let sample = [DrawRandomDouble(0.0, 1.0), DrawRandomDouble(0.0, 1.0)];
+    Message($"Raw data: {sample}");
+    
+    let norm = Sqrt(sample[0] ^ 2.0 + sample[1] ^ 2.0);
+    Message($"Normalized data: [{sample[0] / norm}, {sample[1] / norm}]");
+    
+    use q = Qubit();
+    let (_, encoder) = (InputEncoder(sample))!;
+    encoder(LittleEndian([q]));
+    Message("Encoded as a quantum state:");
+    DumpMachine();
+    Reset(q);
+}
+
+//-----------------------------------------------
+%simulate EncodeDataDemo
+
+
+//-----Classification Model Circuit
+open Microsoft.Quantum.MachineLearning;
+
+function ClassifierStructure () : ControlledRotation[] {
+    return [
+        ControlledRotation((0, []), PauliY, 0)
+    ];
+}
+
+
+//-----Training the Model
+
+open Microsoft.Quantum.Arrays;
+open Microsoft.Quantum.MachineLearning;
+open Microsoft.Quantum.Math;
+
+operation TrainModel (
+    trainingVectors : Double[][],
+    trainingLabels : Int[],
+    initialParameters : Double[][]
+) : (Double[], Double) {
+    // Combine training data and labels into a single data structure
+    let samples = Mapped(
+        LabeledSample,
+        Zipped(trainingVectors, trainingLabels)
+    );
+    
+    // Define a set of models we're going to try training;
+    // in this case all models have the same structure but differ in the value of initial parameters
+    let models = Mapped(
+        SequentialModel(ClassifierStructure(), _, 0.0),
+        initialParameters
+    );
+    
+    // use all samples both for training and for validation
+    let defaultSchedule = SamplingSchedule([0..Length(samples) - 1]);
+    let (optimizedModel, nMisses) = TrainSequentialClassifier(
+        models,
+        samples,
+        DefaultTrainingOptions()
+            w/ LearningRate <- 2.0
+            w/ Tolerance <- 0.0005,
+        defaultSchedule,
+        defaultSchedule
+    );
+    Message($"Training complete, found optimal parameters: {optimizedModel::Parameters}, {optimizedModel::Bias} with {nMisses} misses");
+    return (optimizedModel::Parameters, optimizedModel::Bias);
+}
+
+operation TrainModelDemo () : Unit {
+    // generate the training data
+    let (features, labels) = SampleData(150, [PI() / 6.0, PI()/ 3.0]);
+    let (parameters, bias) = TrainModel(features, labels, [[1.0], [2.0]]);
+}
+
+//-----------------------------------------------
+%simulate TrainModelDemo
+
+//-----Using the trained model for classification/validation
+
+open Microsoft.Quantum.Arrays;
+open Microsoft.Quantum.Convert;
+open Microsoft.Quantum.MachineLearning;
+open Microsoft.Quantum.Math;
+
+operation ValidateModel (
+    validationVectors : Double[][],
+    validationLabels : Int[],
+    parameters : Double[],
+    bias : Double
+) : Double {
+    // Combine training data and labels into a single data structure
+    let samples = Mapped(
+        LabeledSample,
+        Zipped(validationVectors, validationLabels)
+    );
+
+    let tolerance = 0.005;
+    let nMeasurements = 10000;
+    // use all data for validation
+    let defaultSchedule = SamplingSchedule([0..Length(samples) - 1]);    
+    let results = ValidateSequentialClassifier(
+        SequentialModel(ClassifierStructure(), parameters, bias),
+        samples,
+        tolerance,
+        nMeasurements,
+        defaultSchedule
+    );
+    return IntAsDouble(results::NMisclassifications) / IntAsDouble(Length(samples));
+}
+
+operation TrainAndValidateModelDemo () : Unit {
+    // generate the training data
+    let (trainingVectors, trainingLabels) = SampleData(150, [PI() / 6.0, PI()/ 3.0]);
+    let (parameters, bias) = TrainModel(trainingVectors, trainingLabels, [[1.0], [2.0]]);
+    
+    // generate the validation data
+    let (validationVectors, validationLabels) = SampleData(50, [PI() / 6.0, PI()/ 3.0]);
+    let missRate = ValidateModel(validationVectors, validationLabels, parameters, bias);
+    Message($"Miss rate: {missRate * 100.0}%");
+}
+
+//-----------------------------------------------
+%simulate TrainAndValidateModelDemo
+
+
+■□■□■□■□■□■□■□■□■□■□■□■□■□■□
+
+■=====================================
+○ Visual Studio Code 설치하여 QDK 활용 방법
+< https://docs.microsoft.com/ko-kr/learn/modules/qsharp-create-first-quantum-development-kit/2-install-quantum-development-kit-code?ns-enrollment-type=learningpath&ns-enrollment-id=learn.quantum-computing-fundamentals >
+
+○ Microsoft Github for Quantum
+    < https://github.com/microsoft/Quantum >
+    --> sample 폴더 내 다양한 모듈들 활용 가능
+
+
+■=====================================
+○ Azure Quantum documentation
+    https://docs.microsoft.com/en-us/azure/quantum/
+    https://docs.microsoft.com/ko-kr/azure/quantum/
+
+○ Github for Microsoft QDK
+    https://github.com/microsoft/Quantum
+
+○ Github for Q# and quantum computing
+    https://github.com/microsoft/QuantumKatas
+
+○ Microsoft nugget packages
+    https://www.nuget.org/packages
+
+○ Quantum Toolbox in Python
+    https://qutip.org/
+
+■□■□■□■□■□■□■□■□■□■□■□■□■□■□
+EOD
+■□■□■□■□■□■□■□■□■□■□■□■□■□■□
+
